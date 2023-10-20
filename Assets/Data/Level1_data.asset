@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a908b8216cb8e04886908cf0a76d7ba, type: 3}
   m_Name: Level1_data
   m_EditorClassIdentifier: 
-  GameFallSpeed: 0.12
+  GameFallSpeed: 0.2
   GameTimer: 20
   GameTargetScore: 20
   ScoreByPuyo: 100
