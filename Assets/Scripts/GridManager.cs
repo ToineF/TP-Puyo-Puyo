@@ -86,7 +86,30 @@ public class GridManager : MonoBehaviour
             Puyo.ColorType colorToSearch = _puyoGrid[xGrid, yGrid].CurrentPuyo.Color;
             CheckForChain(xGrid, yGrid, colorToSearch);
             CountChainedPuyos();
+            CheckForUpperPuyos(xGrid, yGrid);
             CreateNewPuyoOnTop();
+        }
+    }
+
+    private void CheckForUpperPuyos(int xGrid, int yGrid)
+    {
+        HashSet<Vector2Int> _puyosThatWillFall = new HashSet<Vector2Int>();
+
+        for (int y = _gridHeight - 1; y >= yGrid; y--)
+        {
+            if (_puyoGrid[xGrid, y].CellType == CellElement.Type.GroundedPuyo)
+            {
+                _puyosThatWillFall.Add(new Vector2Int(xGrid, y));
+            }
+        }
+
+        foreach (Vector2Int puyoThatFalls in _puyosThatWillFall)
+        {
+            if (puyoThatFalls.y-1 > 0)
+            {
+                if (_puyoGrid[puyoThatFalls.x, puyoThatFalls.y].CellType != CellElement.Type.GroundedPuyo) UpdatePuyoPosition(puyoThatFalls.x, puyoThatFalls.y, puyoThatFalls.x, puyoThatFalls.y);
+            }
+            
         }
     }
 
