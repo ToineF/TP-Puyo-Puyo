@@ -13,7 +13,8 @@ public class GridManager : MonoBehaviour
     private CellElement[,] _puyoGrid;
     private bool[,] _checkedChainedPuyos;
 
-    public Vector2Int _playerPosition;
+    private Vector2Int _playerPosition;
+    [HideInInspector] public bool HasGameEnded;
 
     [Header("Assets")]
     [SerializeField] private GameLoop _gameLoop;
@@ -47,7 +48,7 @@ public class GridManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("You Lose.");
+            _gameLoop.Lose();
         }
 
     }
@@ -67,6 +68,8 @@ public class GridManager : MonoBehaviour
 
     private void CreateNewPuyo(int xGrid, int yGrid, Puyo existingPuyo = null, bool isPlayer = false)
     {
+        if (HasGameEnded) return;
+
         if (existingPuyo == null)
         {
             existingPuyo = GetRandomPuyo();
@@ -102,7 +105,7 @@ public class GridManager : MonoBehaviour
             _puyoGrid[xGrid, yGrid].CellType = CellElement.Type.GroundedPuyo;
             return;
         }
-        if (_puyoGrid[xGrid, yGrid - 1].CellType != CellElement.Type.Empty)
+        if (_puyoGrid[xGrid, yGrid - 1].CellType == CellElement.Type.GroundedPuyo)
         {
             _puyoGrid[xGrid, yGrid].CellType = CellElement.Type.GroundedPuyo;
             return;
@@ -144,7 +147,7 @@ public class GridManager : MonoBehaviour
 
         if (isPlayer)
         {
-            targetX = _playerPosition.x + (currentX-targetX);
+            targetX = _playerPosition.x + (currentX - targetX);
             currentX = _playerPosition.x;
             currentY = _playerPosition.y;
         }
@@ -215,6 +218,8 @@ public class GridManager : MonoBehaviour
 
     private void PlayerMovements()
     {
+        if (_playerPosition.y >= _gridHeight - 1) return;
+
         int leftAxis = Input.GetKeyDown(KeyCode.LeftArrow) ? 1 : 0;
         int rightAxis = Input.GetKeyDown(KeyCode.RightArrow) ? 1 : 0;
         if (rightAxis - leftAxis == 0) return;
@@ -225,24 +230,6 @@ public class GridManager : MonoBehaviour
 
         UpdatePuyoPosition(_playerPosition.x, _playerPosition.y, targetPosition.x, targetPosition.y, true);
     }
-
-    //private void PlayerMovements()
-    //{
-    //    if (_playablePuyoPosition == null) return;
-    //    if (_puyoGrid[_playablePuyoPosition.x, _playablePuyoPosition.y].CellType != CellElement.Type.FallingPuyo) return;
-
-    //    int leftAxis = Input.GetKeyDown(KeyCode.LeftArrow) ? 1 : 0;
-    //    int rightAxis = Input.GetKeyDown(KeyCode.RightArrow) ? 1 : 0;
-    //    if (rightAxis - leftAxis == 0) return;
-
-    //    Vector2Int targetPosition = new Vector2Int(_playablePuyoPosition.x + rightAxis - leftAxis, _playablePuyoPosition.y);
-
-    //    if (targetPosition.x < 0 || targetPosition.x > _gridWidth - 1) return;
-
-    //    UpdatePuyoPosition(_playablePuyoPosition.x, _playablePuyoPosition.y, targetPosition.x, targetPosition.y);
-    //    _playablePuyoPosition = new Vector2Int(targetPosition.x, targetPosition.y);
-
-    //}
     #endregion
 
     private Vector2 CellToWorldPosition(int xGrid, int yGrid)

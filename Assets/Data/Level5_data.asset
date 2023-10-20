@@ -10,12 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a908b8216cb8e04886908cf0a76d7ba, type: 3}
-  m_Name: Level1_data
+  m_Name: Level5_data
   m_EditorClassIdentifier: 
-  GameFallSpeed: 0.4
-  GameTimer: 60
-  GameTargetScore: 300
+  GameFallSpeed: 0.05
+  GameTimer: 120
+  GameTargetScore: 1900
   ScoreByPuyo: 100
   GamePuyos:
   - {fileID: 802777645487290696, guid: 8b08781e968e62d4a98c87fe90be7d32, type: 3}
+  - {fileID: 802777645487290696, guid: 33dc862244691004591d6712d89bf1d5, type: 3}
+  - {fileID: 802777645487290696, guid: 708f2d683a54a424da25e45fa42f9b05, type: 3}
+  - {fileID: 802777645487290696, guid: 16a470f253caab9478c96c9ce6c5cab1, type: 3}
   - {fileID: 802777645487290696, guid: 11ae12d6a28944c4aadc155c187597b3, type: 3}
