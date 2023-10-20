@@ -6,7 +6,8 @@ using UnityEngine;
 public class GameParams : ScriptableObject
 {
     public float GameFallSpeed;
-    public int GameTimer; // not in GridManager
-    public int GameTargetScore; // not in GridManager
+    public int GameTimer;
+    public int GameTargetScore;
+    public int ScoreByPuyo;
     [field:SerializeField] public List<Puyo> GamePuyos;
 }

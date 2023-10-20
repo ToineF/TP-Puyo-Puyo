@@ -13,9 +13,10 @@ public class GridManager : MonoBehaviour
     private CellElement[,] _puyoGrid;
     private bool[,] _checkedChainedPuyos;
 
-    private Vector2Int _playablePuyoPosition;
+    public Vector2Int _playablePuyoPosition;
 
     [Header("Assets")]
+    [SerializeField] private GameLoop _gameLoop;
     [SerializeField] private GameParams _gameParams;
     [SerializeField] private GameObject _backgroundTilePrefab;
 
@@ -36,9 +37,23 @@ public class GridManager : MonoBehaviour
 
     private void CreateNewPuyoOnTop()
     {
+        Debug.Log("new");
         int xPuyoStart = Mathf.FloorToInt(_gridWidth / 2);
         int yPuyoStart = _gridHeight - 1;
-        CreateNewPuyo(xPuyoStart, yPuyoStart);
+
+        if (_puyoGrid[xPuyoStart, yPuyoStart].CellType != CellElement.Type.GroundedPuyo)
+        {
+            if (_playablePuyoPosition != new Vector2Int(xPuyoStart, yPuyoStart))
+            {
+                CreateNewPuyo(xPuyoStart, yPuyoStart);
+                _playablePuyoPosition = new Vector2Int(xPuyoStart, yPuyoStart);
+            }
+        }
+        else
+        {
+            Debug.Log("You Lose.");
+        }
+
     }
 
     private void CreateGrid()
@@ -58,12 +73,16 @@ public class GridManager : MonoBehaviour
     {
         if (existingPuyo == null)
             existingPuyo = GetRandomPuyo();
+        else
+        {
+            _playablePuyoPosition = new Vector2Int(xGrid, yGrid);
+        }
 
         Puyo newPuyo = Instantiate(existingPuyo, CellToWorldPosition(xGrid, yGrid), Quaternion.identity, _puyosParent);
-        _playablePuyoPosition = new Vector2Int(xGrid, yGrid);
         _puyoGrid[xGrid, yGrid] = new CellElement(CellElement.Type.FallingPuyo);
         _puyoGrid[xGrid, yGrid].CurrentPuyo = newPuyo;
         CheckPuyoGround(xGrid, yGrid);
+
         if (_puyoGrid[xGrid, yGrid].CellType == CellElement.Type.GroundedPuyo)
         {
             _checkedChainedPuyos = new bool[_gridWidth, _gridHeight];
@@ -94,14 +113,13 @@ public class GridManager : MonoBehaviour
             _puyoGrid[xGrid, yGrid].CellType = CellElement.Type.GroundedPuyo;
             return;
         }
-
-        StartCoroutine(WaitForPuyoFall(xGrid, yGrid, xGrid, yGrid - 1));
+        bool isPlayer = xGrid == _playablePuyoPosition.x && yGrid == _playablePuyoPosition.y;
+        StartCoroutine(WaitForPuyoFall(xGrid, yGrid, xGrid, yGrid - 1, isPlayer));
     }
 
     private void UpdatePuyoPosition(int currentX, int currentY, int targetX, int targetY)
     {
         Puyo currentPuyo = DestroyPuyo(currentX, currentY);
-
         CreateNewPuyo(targetX, targetY, currentPuyo);
     }
 
@@ -114,9 +132,16 @@ public class GridManager : MonoBehaviour
         return currentPuyo.CurrentPuyo;
     }
 
-    private IEnumerator WaitForPuyoFall(int currentX, int currentY, int targetX, int targetY)
+    private IEnumerator WaitForPuyoFall(int currentX, int currentY, int targetX, int targetY, bool isPlayer = false)
     {
         yield return new WaitForSeconds(_fallTime);
+
+        if (isPlayer)
+        {
+            currentX = _playablePuyoPosition.x;
+            currentY = _playablePuyoPosition.y;
+            targetX = _playablePuyoPosition.x;
+        }
 
         UpdatePuyoPosition(currentX, currentY, targetX, targetY);
     }
@@ -145,7 +170,7 @@ public class GridManager : MonoBehaviour
         {
             for (int y = 0; y < _gridHeight; y++)
             {
-                if (_checkedChainedPuyos[x,y] == true)
+                if (_checkedChainedPuyos[x, y] == true)
                 {
                     _chainedPuyos.Add(new Vector2Int(x, y));
                 }
@@ -154,16 +179,25 @@ public class GridManager : MonoBehaviour
         float _puyosCount = _chainedPuyos.Count;
 
         HashSet<Vector2Int> _puyosThatWillFall = new HashSet<Vector2Int>();
-        if (_puyosCount >= _puyoComboCount)
+        if (_puyosCount < _puyoComboCount) return;
+        _chainedPuyos.Reverse();
+        _gameLoop.AddScore(_puyoComboCount);
+
+        foreach (Vector2Int puyo in _chainedPuyos)
         {
-            foreach (Vector2Int puyo in _chainedPuyos)
+            for (int y = puyo.y + 1; y < _gridHeight; y++)
             {
-                DestroyPuyo(puyo.x, puyo.y);
-                //for (int y = puyo.y; y < _gridHeight-1; y++)
-                //{
-                //    Debug.Log(y);
-                //}
+                if (_puyoGrid[puyo.x, y].CellType == CellElement.Type.GroundedPuyo)
+                {
+                    _puyosThatWillFall.Add(new Vector2Int(puyo.x, y));
+                }
             }
+            DestroyPuyo(puyo.x, puyo.y);
+        }
+
+        foreach (Vector2Int puyoThatFalls in _puyosThatWillFall)
+        {
+            UpdatePuyoPosition(puyoThatFalls.x, puyoThatFalls.y, puyoThatFalls.x, puyoThatFalls.y);
         }
     }
     #endregion
@@ -177,7 +211,7 @@ public class GridManager : MonoBehaviour
     private void PlayerMovements()
     {
         if (_playablePuyoPosition == null) return;
-        if (_puyoGrid[_playablePuyoPosition.x, _playablePuyoPosition.y].CellType == CellElement.Type.GroundedPuyo) return;
+        if (_puyoGrid[_playablePuyoPosition.x, _playablePuyoPosition.y].CellType != CellElement.Type.FallingPuyo) return;
 
         int leftAxis = Input.GetKeyDown(KeyCode.LeftArrow) ? 1 : 0;
         int rightAxis = Input.GetKeyDown(KeyCode.RightArrow) ? 1 : 0;
@@ -188,6 +222,8 @@ public class GridManager : MonoBehaviour
         if (targetPosition.x < 0 || targetPosition.x > _gridWidth - 1) return;
 
         UpdatePuyoPosition(_playablePuyoPosition.x, _playablePuyoPosition.y, targetPosition.x, targetPosition.y);
+        _playablePuyoPosition = new Vector2Int(targetPosition.x, targetPosition.y);
+
     }
     #endregion
 
